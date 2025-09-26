@@ -3,6 +3,7 @@ import subprocess
 from typing import Tuple, Optional
 
 from langchain_core.tools import tool
+from agent.interactive_editor import InteractiveCodeEditor, start_interactive_editing_session
 
 def get_next_project_folder() -> pathlib.Path:
     """Get the next available project folder (generated_projects_1, generated_projects_2, etc.)"""
@@ -73,3 +74,65 @@ def run_cmd(cmd: str, cwd: Optional[str] = None, timeout: int = 30) -> Tuple[int
 def init_project_root():
     PROJECT_ROOT.mkdir(parents=True, exist_ok=True)
     return str(PROJECT_ROOT)
+
+
+@tool
+def detect_project_errors() -> str:
+    """Detect errors in the generated project files (HTML, CSS, JavaScript, JSON)."""
+    editor = InteractiveCodeEditor(str(PROJECT_ROOT))
+    errors = editor.detect_errors()
+    
+    if not errors:
+        return "✅ No errors detected in the project!"
+    
+    error_report = f"🔍 Found {len(errors)} error(s):\n"
+    for i, error in enumerate(errors, 1):
+        error_report += f"{i}. {error['type']} Error in {error['file']}:{error['line']}\n"
+        error_report += f"   {error['message']}\n"
+    
+    return error_report
+
+
+@tool
+def start_interactive_editor(file_path: str = "") -> str:
+    """Start interactive code editor for fixing errors. If file_path is provided, edit that specific file."""
+    try:
+        target_file = file_path if file_path else None
+        start_interactive_editing_session(str(PROJECT_ROOT), target_file)
+        return "✅ Interactive editing session completed!"
+    except Exception as e:
+        return f"❌ Error starting interactive editor: {str(e)}"
+
+
+@tool
+def validate_file(file_path: str) -> str:
+    """Validate a specific file for errors."""
+    editor = InteractiveCodeEditor(str(PROJECT_ROOT))
+    target_file = PROJECT_ROOT / file_path
+    
+    if not target_file.exists():
+        return f"❌ File {file_path} not found!"
+    
+    try:
+        suffix = target_file.suffix.lower()
+        if suffix == '.html':
+            errors = editor._validate_html(target_file)
+        elif suffix == '.css':
+            errors = editor._validate_css(target_file)
+        elif suffix == '.js':
+            errors = editor._validate_js(target_file)
+        elif target_file.name == 'package.json':
+            errors = editor._validate_package_json(target_file)
+        else:
+            return f"⚠️ No validation available for {suffix} files"
+        
+        if errors:
+            error_report = f"❌ Found {len(errors)} error(s) in {file_path}:\n"
+            for error in errors:
+                error_report += f"   Line {error['line']}: {error['message']}\n"
+            return error_report
+        else:
+            return f"✅ No errors found in {file_path}!"
+            
+    except Exception as e:
+        return f"❌ Error validating file: {str(e)}"

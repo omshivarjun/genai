@@ -8,12 +8,15 @@ An intelligent web application builder powered by Google Gemini API that generat
 - **📁 Unique Project Management**: Each generation creates a uniquely numbered project folder
 - **🏗️ Multi-Agent Architecture**: Planner → Architect → Coder workflow using LangGraph
 - **🎨 Complete Web Apps**: Generates HTML, CSS, and JavaScript files for functional web applications
+- **🔧 Interactive Error Editing**: Command-line editor for fixing code issues in real-time
+- **🔍 Smart Error Detection**: Automatic validation of HTML, CSS, JavaScript, and JSON files
 - **⚡ Fast & Reliable**: Optimized for quick project scaffolding and prototyping
 
 ## 📋 Table of Contents
 
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [Interactive Error Editing](#interactive-error-editing)
 - [Generated Projects](#generated-projects)
 - [Project Structure](#project-structure)
 - [Configuration](#configuration)
@@ -79,6 +82,62 @@ An intelligent web application builder powered by Google Gemini API that generat
        ├── 📄 style.css
        └── 📄 script.js
    ```
+
+## 🔧 Interactive Error Editing
+
+The GenAI App Builder includes a powerful interactive editing system that automatically detects errors in generated code and provides a GitHub Copilot-like command-line editing experience.
+
+### 🔍 Automatic Error Detection
+
+After generating a project, the system automatically validates:
+- **HTML**: Unclosed tags, malformed structure, missing elements
+- **CSS**: Unclosed braces, syntax errors, malformed selectors  
+- **JavaScript**: Syntax errors, unclosed functions, missing semicolons
+- **JSON**: Invalid JSON structure in package.json files
+
+### 🎯 Interactive Editor Commands
+
+When errors are detected, you can use the interactive editor with these commands:
+
+```bash
+📝 Interactive Code Editor Commands:
+  edit <line>          - Edit specific line
+  insert <line>        - Insert line after specified line  
+  delete <line>        - Delete specific line
+  replace <start> <end> - Replace lines from start to end
+  show                 - Show file with errors highlighted
+  save                 - Save changes to file
+  test                 - Re-run error detection  
+  exit                 - Exit editor
+  help                 - Show command help
+```
+
+### 🚀 Enhanced Usage Modes
+
+1. **Automatic Mode** - Run with error detection:
+   ```bash
+   python main_with_editor.py
+   ```
+
+2. **Standalone Editor** - Edit existing projects:
+   ```bash
+   python test_interactive_editor.py
+   ```
+
+3. **Test Mode** - Try the editor with sample errors:
+   ```bash
+   python test_interactive_editor.py
+   # Choose option 1 to create test files with errors
+   ```
+
+### ✨ Editor Features
+
+- **Line-by-line editing** with syntax highlighting
+- **Error highlighting** shows problematic lines with ❌
+- **Real-time validation** after each edit
+- **Multi-file support** for complex projects
+- **Undo-safe editing** with confirmation prompts
+- **Smart error detection** using Node.js validation when available
 
 ## �️ Architecture
 

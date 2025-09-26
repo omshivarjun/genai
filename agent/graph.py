@@ -7,7 +7,7 @@ from langgraph.prebuilt import create_react_agent
 
 from agent.prompts import *
 from agent.states import *
-from agent.tools import write_file, read_file, get_current_directory, list_files
+from agent.tools import write_file, read_file, get_current_directory, list_files, detect_project_errors, start_interactive_editor, validate_file
 
 _ = load_dotenv()
 
@@ -77,18 +77,91 @@ def coder_agent(state: dict) -> dict:
     return {"coder_state": coder_state}
 
 
+def error_detector_agent(state: dict) -> dict:
+    """Detects errors in the generated project."""
+    print("🔍 Checking for errors in generated project...")
+    
+    # Use the detect_project_errors tool
+    error_report = detect_project_errors.invoke({})
+    
+    has_errors = "error(s)" in error_report.lower()
+    
+    print(error_report)
+    
+    return {
+        "error_report": error_report,
+        "has_errors": has_errors,
+        "status": "ERRORS_FOUND" if has_errors else "NO_ERRORS"
+    }
+
+
+def interactive_editor_agent(state: dict) -> dict:
+    """Interactive editor for fixing errors."""
+    error_report = state.get("error_report", "")
+    
+    print("\n🎯 Starting Interactive Editor Session")
+    print("=" * 50)
+    print("Errors detected in your project. You can now edit the code interactively.")
+    print("The editor will help you fix syntax errors, missing tags, and other issues.")
+    print("=" * 50)
+    
+    # Start the interactive editor
+    try:
+        result = start_interactive_editor.invoke({"file_path": ""})
+        print(result)
+        
+        # After editing, check for errors again
+        print("\n🔍 Re-checking for errors after editing...")
+        new_error_report = detect_project_errors.invoke({})
+        has_remaining_errors = "error(s)" in new_error_report.lower()
+        
+        return {
+            "error_report": new_error_report,
+            "has_errors": has_remaining_errors,
+            "status": "EDITING_COMPLETE",
+            "interactive_editing_done": True
+        }
+        
+    except Exception as e:
+        print(f"❌ Error in interactive editor: {e}")
+        return {
+            "status": "EDITOR_ERROR",
+            "error_message": str(e),
+            "has_errors": True
+        }
+
+
 graph = StateGraph(dict)
 
 graph.add_node("planner", planner_agent)
 graph.add_node("architect", architect_agent)
 graph.add_node("coder", coder_agent)
+graph.add_node("error_detector", error_detector_agent)
+graph.add_node("interactive_editor", interactive_editor_agent)
 
+# Initial flow
 graph.add_edge("planner", "architect")
 graph.add_edge("architect", "coder")
+
+# After coding, check for errors
 graph.add_conditional_edges(
     "coder",
-    lambda s: "END" if s.get("status") == "DONE" else "coder",
-    {"END": END, "coder": "coder"}
+    lambda s: "error_detector" if s.get("status") == "DONE" else "coder",
+    {"error_detector": "error_detector", "coder": "coder"}
+)
+
+# If errors found, go to interactive editor, otherwise end
+graph.add_conditional_edges(
+    "error_detector",
+    lambda s: "interactive_editor" if s.get("has_errors") else "END",
+    {"interactive_editor": "interactive_editor", "END": END}
+)
+
+# After interactive editing, check for errors again or end
+graph.add_conditional_edges(
+    "interactive_editor",
+    lambda s: "error_detector" if s.get("has_errors") else "END",
+    {"error_detector": "error_detector", "END": END}
 )
 
 graph.set_entry_point("planner")
