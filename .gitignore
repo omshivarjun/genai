@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Environment variables
+.env
+
 
 #Ignore vscode AI rules
 .github\instructions\codacy.instructions.md
