@@ -1,0 +1,90 @@
+<!-- Architecture Diagram -->
+<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="400" fill="#f8fafc"/>
+  
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" fill="#1e293b" font-size="20" font-family="Arial" font-weight="bold">GenAI App Builder Architecture</text>
+  
+  <!-- User Input -->
+  <rect x="50" y="80" width="120" height="60" fill="#3b82f6" rx="5"/>
+  <text x="110" y="105" text-anchor="middle" fill="white" font-size="12" font-family="Arial">User Prompt</text>
+  <text x="110" y="120" text-anchor="middle" fill="white" font-size="10" font-family="Arial">"Create a calculator"</text>
+  
+  <!-- Arrow 1 -->
+  <path d="M170 110 L220 110" stroke="#64748b" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Planner Agent -->
+  <rect x="220" y="80" width="120" height="60" fill="#10b981" rx="5"/>
+  <text x="280" y="100" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">Planner Agent</text>
+  <text x="280" y="115" text-anchor="middle" fill="white" font-size="10" font-family="Arial">• Analyze requirements</text>
+  <text x="280" y="125" text-anchor="middle" fill="white" font-size="10" font-family="Arial">• Define features</text>
+  
+  <!-- Arrow 2 -->
+  <path d="M340 110 L390 110" stroke="#64748b" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Architect Agent -->
+  <rect x="390" y="80" width="120" height="60" fill="#f59e0b" rx="5"/>
+  <text x="450" y="100" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">Architect Agent</text>
+  <text x="450" y="115" text-anchor="middle" fill="white" font-size="10" font-family="Arial">• Design structure</text>
+  <text x="450" y="125" text-anchor="middle" fill="white" font-size="10" font-family="Arial">• Plan components</text>
+  
+  <!-- Arrow 3 -->
+  <path d="M510 110 L560 110" stroke="#64748b" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Coder Agent -->
+  <rect x="560" y="80" width="120" height="60" fill="#ef4444" rx="5"/>
+  <text x="620" y="100" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">Coder Agent</text>
+  <text x="620" y="115" text-anchor="middle" fill="white" font-size="10" font-family="Arial">• Write HTML/CSS/JS</text>
+  <text x="620" y="125" text-anchor="middle" fill="white" font-size="10" font-family="Arial">• Generate files</text>
+  
+  <!-- Gemini API -->
+  <ellipse cx="400" cy="200" rx="80" ry="30" fill="#8b5cf6"/>
+  <text x="400" y="195" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">Google Gemini</text>
+  <text x="400" y="208" text-anchor="middle" fill="white" font-size="10" font-family="Arial">2.0 Flash API</text>
+  
+  <!-- API Connections -->
+  <path d="M280 140 L350 180" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5,5"/>
+  <path d="M450 140 L400 170" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5,5"/>
+  <path d="M620 140 L450 180" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5,5"/>
+  
+  <!-- Output Files -->
+  <g transform="translate(200, 280)">
+    <!-- HTML File -->
+    <rect x="0" y="0" width="80" height="60" fill="#e11d48" rx="5"/>
+    <text x="40" y="20" text-anchor="middle" fill="white" font-size="10" font-family="Arial" font-weight="bold">index.html</text>
+    <text x="40" y="35" text-anchor="middle" fill="white" font-size="8" font-family="Arial">Structure</text>
+    <text x="40" y="45" text-anchor="middle" fill="white" font-size="8" font-family="Arial">& Content</text>
+    
+    <!-- CSS File -->
+    <rect x="100" y="0" width="80" height="60" fill="#2563eb" rx="5"/>
+    <text x="140" y="20" text-anchor="middle" fill="white" font-size="10" font-family="Arial" font-weight="bold">style.css</text>
+    <text x="140" y="35" text-anchor="middle" fill="white" font-size="8" font-family="Arial">Styling</text>
+    <text x="140" y="45" text-anchor="middle" fill="white" font-size="8" font-family="Arial">& Layout</text>
+    
+    <!-- JS File -->
+    <rect x="200" y="0" width="80" height="60" fill="#dc2626" rx="5"/>
+    <text x="240" y="20" text-anchor="middle" fill="white" font-size="10" font-family="Arial" font-weight="bold">script.js</text>
+    <text x="240" y="35" text-anchor="middle" fill="white" font-size="8" font-family="Arial">Logic</text>
+    <text x="240" y="45" text-anchor="middle" fill="white" font-size="8" font-family="Arial">& Behavior</text>
+  </g>
+  
+  <!-- Output Arrow -->
+  <path d="M620 140 L340 270" stroke="#64748b" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Unique Folder System -->
+  <rect x="500" y="280" width="150" height="80" fill="#1f2937" rx="5"/>
+  <text x="575" y="300" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">Unique Folders</text>
+  <text x="575" y="318" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Arial">generated_projects_1/</text>
+  <text x="575" y="330" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Arial">generated_projects_2/</text>
+  <text x="575" y="342" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Arial">generated_projects_3/</text>
+  <text x="575" y="354" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Arial">...</text>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+    refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+    </marker>
+  </defs>
+</svg>
