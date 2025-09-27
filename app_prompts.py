@@ -9,8 +9,16 @@ from typing import Dict, Any
 import os
 from dotenv import load_dotenv
 from agent.graph import agent
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 load_dotenv()
+
+# Initialize Gemini for direct editing
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.0-flash",
+    temperature=0.1,
+    max_retries=3
+)
 
 @dataclass
 class AppSpec:
@@ -397,13 +405,13 @@ APPS = {
 
 def generate_app(app_name: str) -> Dict[str, Any]:
     """
-    Generate an app based on its name using the detailed prompts.
+    Generate an app based on its name using detailed prompts with satisfaction checking.
     
     Args:
         app_name: Name of the app to generate (calculator, todo, grades, quiz, age)
         
     Returns:
-        Dict containing the generation result
+        Dict containing the generation result with satisfaction status
     """
     if app_name.lower() not in APPS:
         available_apps = ", ".join(APPS.keys())
@@ -430,13 +438,18 @@ def generate_app(app_name: str) -> Dict[str, Any]:
         
         print(f"\n✅ {app_spec.description} generated successfully!")
         
+        # Check satisfaction and provide editing option
+        satisfaction_result = check_satisfaction_and_edit(app_spec, result)
+        
         return {
             "success": True,
             "app_name": app_spec.name,
             "description": app_spec.description,
             "result": result,
             "features": app_spec.features,
-            "status": result.get("status", "COMPLETED")
+            "status": result.get("status", "COMPLETED"),
+            "satisfied": satisfaction_result.get("satisfied", False),
+            "edit_count": satisfaction_result.get("edit_count", 0)
         }
         
     except Exception as e:
@@ -446,6 +459,180 @@ def generate_app(app_name: str) -> Dict[str, Any]:
             "error": str(e),
             "app_name": app_spec.name
         }
+
+def check_satisfaction_and_edit(app_spec, generation_result) -> Dict[str, Any]:
+    """Check user satisfaction and provide Gemini-powered editing options."""
+    print(f"\n{'='*60}")
+    print(f"🎯 {app_spec.description} Generation Complete!")
+    print(f"{'='*60}")
+    
+    # Show generated files location
+    project_path = None
+    if os.path.exists("generated_projects"):
+        projects = [d for d in os.listdir("generated_projects") 
+                   if os.path.isdir(os.path.join("generated_projects", d))]
+        if projects:
+            latest_project = max(projects)
+            project_path = os.path.join("generated_projects", latest_project)
+            files = os.listdir(project_path)
+            
+            print(f"\n📁 Generated in: {project_path}")
+            print(f"📄 Files: {', '.join(files)}")
+            print(f"\n🌐 Open {os.path.join(project_path, 'index.html')} in your browser!")
+    
+    edit_count = 0
+    
+    # Satisfaction checking loop
+    while True:
+        print(f"\n{'='*40}")
+        print("🤔 SATISFACTION CHECK")
+        print(f"{'='*40}")
+        
+        try:
+            satisfied = input("\n😊 Are you satisfied with the generated app? (y/n): ").strip().lower()
+            
+            if satisfied in ['y', 'yes']:
+                print(f"\n🎉 Excellent! {app_spec.description} is ready to use!")
+                print(f"✅ SATISFIED - Generation completed successfully!")
+                return {"satisfied": True, "edit_count": edit_count}
+            
+            elif satisfied in ['n', 'no']:
+                print(f"\n🔧 Let's improve the {app_spec.description} using Gemini!")
+                
+                # Get specific feedback
+                feedback = input("\n💬 What would you like me to change or improve? (Be specific): ").strip()
+                
+                if not feedback:
+                    print("⚠️ No feedback provided. Please try again.")
+                    continue
+                
+                # Apply Gemini edit
+                print(f"\n🤖 Using Gemini to apply your changes...")
+                if project_path:
+                    edit_result = apply_gemini_edit_to_project(project_path, feedback, app_spec)
+                    
+                    if edit_result.get("success"):
+                        print(f"✅ Changes applied successfully!")
+                        print(f"🔄 Please check the updated files and let me know if you're satisfied.")
+                        edit_count += 1
+                    else:
+                        print(f"❌ Edit failed: {edit_result.get('error', 'Unknown error')}")
+                else:
+                    print("❌ Project directory not found. Cannot apply edits.")
+                
+            else:
+                print("⚠️ Please enter 'y' for yes or 'n' for no.")
+                
+        except KeyboardInterrupt:
+            print(f"\n\n⛔ Operation cancelled by user.")
+            return {"satisfied": False, "edit_count": edit_count, "cancelled": True}
+        except EOFError:
+            print(f"\n⚠️ Input ended. Assuming satisfied.")
+            return {"satisfied": True, "edit_count": edit_count}
+
+def apply_gemini_edit_to_project(project_path: str, feedback: str, app_spec) -> Dict[str, Any]:
+    """Apply user feedback using Gemini to edit the generated project files."""
+    if not project_path or not os.path.exists(project_path):
+        return {"success": False, "error": "Project directory not found"}
+    
+    try:
+        # Read current files
+        current_files = {}
+        for filename in os.listdir(project_path):
+            file_path = os.path.join(project_path, filename)
+            if os.path.isfile(file_path) and filename.endswith(('.html', '.css', '.js')):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        current_files[filename] = f.read()
+                except Exception as e:
+                    print(f"⚠️ Could not read {filename}: {e}")
+        
+        if not current_files:
+            return {"success": False, "error": "No editable files found"}
+        
+        # Create edit prompt for Gemini
+        files_content = "\n\n".join([f"=== {filename} ===\n{content}" 
+                                    for filename, content in current_files.items()])
+        
+        edit_prompt = f"""
+You are an expert web developer. I have a {app_spec.description} that needs improvements based on user feedback.
+
+CURRENT PROJECT FILES:
+{files_content}
+
+USER FEEDBACK: {feedback}
+
+TASK: Modify the existing files based on the user's feedback. Requirements:
+1. Keep all existing functionality that works correctly
+2. Apply the requested changes/improvements precisely
+3. Maintain beautiful, modern, responsive design
+4. Ensure error-free, clean code
+5. Preserve the same file structure
+6. Make sure all features from the original app specification still work
+
+Please provide the complete updated files with the requested changes applied.
+
+Return ONLY the updated files in this exact format:
+=== filename.ext ===
+[complete updated file content]
+
+=== filename.ext ===
+[complete updated file content]
+"""
+        
+        # Get Gemini response
+        response = llm.invoke(edit_prompt)
+        response_text = str(response.content) if hasattr(response, 'content') else str(response)
+        
+        # Parse updated files from response
+        updated_files = parse_gemini_response(response_text)
+        
+        if not updated_files:
+            return {"success": False, "error": "Could not parse Gemini response"}
+        
+        # Save updated files
+        saved_files = []
+        for filename, content in updated_files.items():
+            file_path = os.path.join(project_path, filename)
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                saved_files.append(filename)
+                print(f"📝 Updated: {filename}")
+            except Exception as e:
+                print(f"❌ Failed to save {filename}: {e}")
+        
+        return {"success": True, "updated_files": saved_files}
+        
+    except Exception as e:
+        return {"success": False, "error": f"Gemini edit failed: {str(e)}"}
+
+def parse_gemini_response(response_text: str) -> Dict[str, str]:
+    """Parse Gemini response to extract updated file contents."""
+    files = {}
+    current_file = None
+    current_content = []
+    
+    lines = response_text.split('\n')
+    
+    for line in lines:
+        if line.startswith('=== ') and line.endswith(' ==='):
+            # Save previous file if exists
+            if current_file and current_content:
+                files[current_file] = '\n'.join(current_content).strip()
+            
+            # Start new file
+            current_file = line[4:-4].strip()
+            current_content = []
+        else:
+            if current_file:
+                current_content.append(line)
+    
+    # Save last file
+    if current_file and current_content:
+        files[current_file] = '\n'.join(current_content).strip()
+    
+    return files
 
 def list_available_apps():
     """List all available apps with their descriptions."""
@@ -492,6 +679,15 @@ def main():
         print(f"\n🎉 {result['description']} completed!")
         print(f"📊 Status: {result.get('status', 'COMPLETED')}")
         
+        # Show satisfaction status
+        if result.get("satisfied"):
+            print(f"😊 User Satisfaction: ✅ SATISFIED")
+        else:
+            print(f"😔 User Satisfaction: ❌ NOT SATISFIED")
+        
+        if result.get("edit_count", 0) > 0:
+            print(f"🔧 Gemini Edits Applied: {result['edit_count']}")
+        
         # Show generated files location
         if os.path.exists("generated_projects"):
             projects = [d for d in os.listdir("generated_projects") 
@@ -504,6 +700,14 @@ def main():
                 print(f"\n📁 Generated in: {project_path}")
                 print(f"📄 Files: {', '.join(files)}")
                 print(f"\n🌐 Open {os.path.join(project_path, 'index.html')} in your browser!")
+                
+        print(f"\n{'='*50}")
+        if result.get("satisfied"):
+            print("🎊 PROJECT COMPLETED SUCCESSFULLY - USER SATISFIED! 🎊")
+        else:
+            print("⚠️ PROJECT COMPLETED - USER NOT FULLY SATISFIED")
+        print(f"{'='*50}")
+        
     else:
         print(f"\n❌ Generation failed: {result.get('error', 'Unknown error')}")
 

@@ -1,20 +1,25 @@
-# 🚀 GenAI App Builder
+# 🚀 GenAI App Builder - Enhanced with Satisfaction Checking
 
 An intelligent web application builder powered by Google Gemini API that generates complete HTML, CSS, and JavaScript projects from simple text prompts. This tool uses a multi-agent system with LangGraph to plan, architect, and code full-stack web applications automatically.
+
+**🆕 NEW: Interactive Satisfaction Checking with Gemini-Powered Editing!**
 
 ## 🌟 Features
 
 - **🤖 AI-Powered Generation**: Uses Google Gemini 2.0 Flash for intelligent code generation
-- **📁 Unique Project Management**: Each generation creates a uniquely numbered project folder
+- **� Interactive Satisfaction Checking**: NEW! System asks if you're satisfied and improves until you are
+- **🔧 Gemini-Powered Editing**: NEW! Natural language editing - just describe what to change
+- **🔄 Iterative Improvement Loop**: NEW! Keep editing until the app is exactly what you want
+- **�📁 Unique Project Management**: Each generation creates a uniquely numbered project folder
 - **🏗️ Multi-Agent Architecture**: Planner → Architect → Coder workflow using LangGraph
 - **🎨 Complete Web Apps**: Generates HTML, CSS, and JavaScript files for functional web applications
-- **🔧 Interactive Error Editing**: Command-line editor for fixing code issues in real-time
 - **🔍 Smart Error Detection**: Automatic validation of HTML, CSS, JavaScript, and JSON files
 - **⚡ Fast & Reliable**: Optimized for quick project scaffolding and prototyping
 
 ## 📋 Table of Contents
 
 - [Installation](#installation)
+- [New: Satisfaction Checking](#new-satisfaction-checking)
 - [Quick Start](#quick-start)
 - [Interactive Error Editing](#interactive-error-editing)
 - [Generated Projects](#generated-projects)
@@ -23,6 +28,51 @@ An intelligent web application builder powered by Google Gemini API that generat
 - [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
+
+## 🆕 New: Satisfaction Checking
+
+The enhanced system now includes **interactive satisfaction checking** with **Gemini-powered editing**:
+
+### 🎯 How It Works
+1. **Generate** your app with detailed prompts
+2. **Review** the generated files and functionality  
+3. **Satisfaction Check** - System asks: "*Are you satisfied? (y/n)*"
+4. **If Yes** → ✅ **SATISFIED** - Complete!
+5. **If No** → Describe what to improve in natural language
+6. **Gemini Edit** → AI applies your requested changes
+7. **Repeat** until you're completely happy with the result
+
+### 📊 Example Workflow
+```
+🚀 Generating Scientific Calculator...
+✅ Scientific Calculator generated successfully!
+
+========================================
+🤔 SATISFACTION CHECK  
+========================================
+
+😊 Are you satisfied with the generated app? (y/n): n
+
+💬 What would you like me to change or improve? (Be specific): 
+Make the buttons larger and add a dark theme toggle
+
+🤖 Using Gemini to apply your changes...
+📝 Updated: index.html
+📝 Updated: styles.css  
+📝 Updated: script.js
+✅ Changes applied successfully!
+
+😊 Are you satisfied with the generated app? (y/n): y
+
+🎉 Excellent! Scientific Calculator is ready to use!
+✅ SATISFIED - Generation completed successfully!
+```
+
+### ✨ Benefits
+- **Higher Quality**: Iterative improvement until perfect
+- **User Control**: You decide when the app is ready
+- **Natural Language**: Just describe what you want changed
+- **No Manual Coding**: AI handles all the technical implementation
 
 ## 🔧 Installation
 
