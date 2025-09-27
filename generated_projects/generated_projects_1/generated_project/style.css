@@ -1,0 +1,111 @@
+/* CSS Variables for theming */
+:root {
+    --bg-color: #2d3436;
+    --text-color: #dfe6e9;
+    --accent-color: #00b894;
+    --button-bg: #454545;
+    --button-hover: #555555;
+}
+
+/* General body styles */
+body {
+    font-family: sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Calculator container */
+.calculator {
+    background-color: var(--button-bg);
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    width: 320px;
+}
+
+/* Header styling */
+header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid #333;
+}
+
+/* Display area styling */
+.display {
+    padding: 20px;
+    text-align: right;
+}
+
+/* History display */
+.history {
+    color: #888;
+    font-size: 0.8em;
+    min-height: 3em;
+}
+
+/* Input display */
+.input {
+    font-size: 1.5em;
+    min-height: 1.5em;
+}
+
+/* Result display */
+.result {
+    font-size: 2em;
+    font-weight: bold;
+    min-height: 2em;
+}
+
+/* Buttons grid layout */
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* Button styling */
+.button {
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: none;
+    padding: 20px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.button:hover {
+    background-color: var(--button-hover);
+}
+
+.button:active {
+    transform: scale(0.95);
+}
+
+/* Operator button style */
+.operator {
+    color: var(--accent-color);
+}
+
+/* Equal button style */
+.equal {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+}
+
+/* Clear button style */
+.clear {
+    background-color: #e74c3c;
+    color: var(--text-color);
+}
+
+/* Media query for responsive design */
+@media (max-width: 480px) {
+    .calculator {
+        width: 90%;
+    }
+}

@@ -4,6 +4,7 @@ from typing import Tuple, Optional
 
 from langchain_core.tools import tool
 from agent.interactive_editor import InteractiveCodeEditor, start_interactive_editing_session
+from agent.auto_debugger import auto_debug_project
 
 def get_next_project_folder() -> pathlib.Path:
     """Get the next available project folder (generated_projects_1, generated_projects_2, etc.)"""
@@ -30,12 +31,138 @@ def safe_path_for_project(path: str) -> pathlib.Path:
 
 @tool
 def write_file(path: str, content: str) -> str:
-    """Writes content to a file at the specified path within the project root."""
+    """
+    Writes content to a file at the specified path within the project root.
+    Includes validation to prevent common errors.
+    """
     p = safe_path_for_project(path)
     p.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Validate content based on file type
+    validation_result = _validate_file_content(str(p), content)
+    if not validation_result["valid"]:
+        return f"❌ VALIDATION ERROR in {path}: {validation_result['error']}\n\nPlease fix these issues and try again."
+    
     with open(p, "w", encoding="utf-8") as f:
         f.write(content)
-    return f"WROTE:{p}"
+    
+    # Verify file was written correctly
+    size = p.stat().st_size
+    return f"✅ WROTE: {p} ({size} bytes) - VALIDATED AND ERROR-FREE"
+
+
+def _validate_file_content(filepath: str, content: str) -> dict:
+    """Validate file content to prevent common errors."""
+    try:
+        from pathlib import Path
+        file_ext = Path(filepath).suffix.lower()
+        
+        if file_ext == '.html':
+            return _validate_html_content(content)
+        elif file_ext == '.css':
+            return _validate_css_content(content)  
+        elif file_ext == '.js':
+            return _validate_js_content(content)
+        else:
+            return {"valid": True, "error": None}
+            
+    except Exception as e:
+        return {"valid": False, "error": f"Validation error: {str(e)}"}
+
+
+def _validate_html_content(content: str) -> dict:
+    """Validate HTML content for common issues."""
+    errors = []
+    
+    # Check for DOCTYPE
+    if not content.strip().startswith('<!DOCTYPE html>'):
+        errors.append("Missing <!DOCTYPE html>")
+    
+    # Check for required meta tags
+    if '<meta charset="UTF-8">' not in content and '<meta charset="utf-8">' not in content:
+        errors.append("Missing charset meta tag")
+    
+    if 'name="viewport"' not in content:
+        errors.append("Missing viewport meta tag")
+    
+    # Check for proper HTML structure
+    required_tags = ['<html', '</html>', '<head>', '</head>', '<body>', '</body>']
+    for tag in required_tags:
+        if tag not in content:
+            errors.append(f"Missing {tag} tag")
+    
+    # Check for CSS linking
+    if 'rel="stylesheet"' not in content and '<style>' not in content:
+        errors.append("No CSS found - add <link rel='stylesheet' href='style.css'>")
+    
+    # Check for JS linking for interactive elements  
+    has_interactive = any(tag in content.lower() for tag in ['button', 'input', 'form', 'click'])
+    if has_interactive:
+        if 'src="script.js"' not in content and '<script>' not in content:
+            errors.append("Interactive elements found but no JavaScript linked")
+    
+    if errors:
+        return {"valid": False, "error": "; ".join(errors)}
+    
+    return {"valid": True, "error": None}
+
+
+def _validate_css_content(content: str) -> dict:
+    """Validate CSS content for common issues."""
+    errors = []
+    
+    # Check for unclosed braces
+    open_braces = content.count('{') - content.count('}')
+    if open_braces != 0:
+        errors.append(f"Mismatched braces: {abs(open_braces)} {'missing' if open_braces > 0 else 'extra'}")
+    
+    # Check for missing semicolons
+    lines = content.split('\n')
+    for line_num, line in enumerate(lines, 1):
+        line = line.strip()
+        # Property line that should end with semicolon
+        if ':' in line and not line.endswith((';', '{', '}')) and not any(x in line for x in ['/*', '*/', '@']):
+            errors.append(f"Missing semicolon at line {line_num}")
+            break  # Only report first instance
+    
+    # Check for unclosed comments  
+    if '/*' in content and content.count('/*') != content.count('*/'):
+        errors.append("Unclosed comment block")
+    
+    if errors:
+        return {"valid": False, "error": "; ".join(errors[:2])}  # Limit errors
+    
+    return {"valid": True, "error": None}
+
+
+def _validate_js_content(content: str) -> dict:
+    """Validate JavaScript content for common issues."""
+    errors = []
+    
+    # Check for basic syntax issues
+    if content.count('(') != content.count(')'):
+        errors.append("Mismatched parentheses")
+    
+    if content.count('{') != content.count('}'):
+        errors.append("Mismatched braces")
+    
+    # Check for dangerous patterns
+    if 'eval(' in content:
+        errors.append("Remove eval() - use safer alternatives")
+    
+    # Check for proper DOM handling
+    if 'document.' in content:
+        if 'DOMContentLoaded' not in content and 'window.onload' not in content:
+            errors.append("Add DOMContentLoaded listener for DOM manipulation")
+    
+    # Check for modern syntax usage
+    if 'var ' in content and ('let ' not in content or 'const ' not in content):
+        errors.append("Use 'let' or 'const' instead of 'var'")
+    
+    if errors:
+        return {"valid": False, "error": "; ".join(errors[:2])}
+    
+    return {"valid": True, "error": None}
 
 
 @tool
@@ -102,6 +229,36 @@ def start_interactive_editor(file_path: str = "") -> str:
         return "✅ Interactive editing session completed!"
     except Exception as e:
         return f"❌ Error starting interactive editor: {str(e)}"
+
+
+@tool
+def auto_debug_with_gemini() -> str:
+    """Automatically analyze and fix all code issues using Gemini AI."""
+    try:
+        results = auto_debug_project(str(PROJECT_ROOT))
+        
+        summary = f"""🤖 Gemini Auto-Debug Results:
+        
+📊 Analysis:
+  • Total issues found: {results['analysis']['total_issues_found']}
+  • Critical issues: {results['analysis']['critical_issues']}
+  • Warnings: {results['analysis']['warnings']}  
+  • Suggestions: {results['analysis']['suggestions']}
+
+🔧 Fixes Applied:
+  • Issues fixed: {results['fixes']['fixes_applied']}
+  • Files processed: {results['fixes']['files_processed']}
+
+✅ Verification:
+  • Status: {results['verification']['status']}
+  • Remaining errors: {results['verification']['errors_remaining']}
+  
+Overall Status: {results['overall_status'].upper()}"""
+        
+        return summary
+        
+    except Exception as e:
+        return f"❌ Error during auto-debug: {str(e)}"
 
 
 @tool

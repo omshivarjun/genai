@@ -7,7 +7,7 @@ from langgraph.prebuilt import create_react_agent
 
 from agent.prompts import *
 from agent.states import *
-from agent.tools import write_file, read_file, get_current_directory, list_files, detect_project_errors, start_interactive_editor, validate_file
+from agent.tools import write_file, read_file, get_current_directory, list_files, detect_project_errors, start_interactive_editor, auto_debug_with_gemini
 
 _ = load_dotenv()
 
@@ -131,6 +131,39 @@ def interactive_editor_agent(state: dict) -> dict:
         }
 
 
+def auto_debugger_agent(state: dict) -> dict:
+    """AI-powered automatic debugger using Gemini."""
+    print("\n🤖 Starting AI Auto-Debugger Session")
+    print("=" * 50)
+    print("Gemini AI will analyze the entire codebase and automatically fix all issues.")
+    print("=" * 50)
+    
+    try:
+        # Use the auto-debugger tool
+        result = auto_debug_with_gemini.invoke({})
+        print(result)
+        
+        # After auto-debugging, check for errors again
+        print("\n🔍 Re-checking for errors after auto-debugging...")
+        new_error_report = detect_project_errors.invoke({})
+        has_remaining_errors = "error(s)" in new_error_report.lower()
+        
+        return {
+            "error_report": new_error_report,
+            "has_errors": has_remaining_errors,
+            "status": "AUTO_DEBUG_COMPLETE",
+            "auto_debugging_done": True
+        }
+        
+    except Exception as e:
+        print(f"❌ Error in auto-debugger: {e}")
+        return {
+            "status": "AUTO_DEBUG_ERROR",
+            "error_message": str(e),
+            "has_errors": True
+        }
+
+
 graph = StateGraph(dict)
 
 graph.add_node("planner", planner_agent)
@@ -138,6 +171,7 @@ graph.add_node("architect", architect_agent)
 graph.add_node("coder", coder_agent)
 graph.add_node("error_detector", error_detector_agent)
 graph.add_node("interactive_editor", interactive_editor_agent)
+graph.add_node("auto_debugger", auto_debugger_agent)
 
 # Initial flow
 graph.add_edge("planner", "architect")
@@ -151,15 +185,39 @@ graph.add_conditional_edges(
 )
 
 # If errors found, go to interactive editor, otherwise end
+def routing_decision(state: dict) -> str:
+    """Route to either auto-debugger, interactive editor, or end based on errors and user preference."""
+    if not state.get("has_errors"):
+        return "END"
+    
+    # Check if user wants auto-debugging (can be set in state or as a preference)
+    use_auto_debug = state.get("use_auto_debug", True)  # Default to auto-debug
+    
+    if use_auto_debug:
+        return "auto_debugger"
+    else:
+        return "interactive_editor"
+
 graph.add_conditional_edges(
     "error_detector",
-    lambda s: "interactive_editor" if s.get("has_errors") else "END",
-    {"interactive_editor": "interactive_editor", "END": END}
+    routing_decision,
+    {
+        "interactive_editor": "interactive_editor", 
+        "auto_debugger": "auto_debugger",
+        "END": END
+    }
 )
 
 # After interactive editing, check for errors again or end
 graph.add_conditional_edges(
     "interactive_editor",
+    lambda s: "error_detector" if s.get("has_errors") else "END",
+    {"error_detector": "error_detector", "END": END}
+)
+
+# After auto-debugging, check for errors again or end  
+graph.add_conditional_edges(
+    "auto_debugger",
     lambda s: "error_detector" if s.get("has_errors") else "END",
     {"error_detector": "error_detector", "END": END}
 )

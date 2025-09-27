@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Calculator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Calculator container -->
+    <div class="calculator">
+        <!-- Header section -->
+        <header>
+            <h1>Calculator</h1>
+        </header>
+
+        <!-- Display section -->
+        <section class="display">
+            <!-- History of calculations -->
+            <div class="history">
+                <p id="history-1"></p>
+                <p id="history-2"></p>
+                <p id="history-3"></p>
+            </div>
+            <!-- Current input display -->
+            <div class="input"></div>
+            <!-- Result display -->
+            <div class="result">0</div>
+        </section>
+
+        <!-- Buttons section -->
+        <section class="buttons">
+            <button class="button clear" aria-label="Clear All">AC</button>
+            <button class="button clear" aria-label="Clear">C</button>
+            <button class="button operator" aria-label="Percent">%</button>
+            <button class="button operator" aria-label="Divide">/</button>
+            <button class="button number" aria-label="Seven">7</button>
+            <button class="button number" aria-label="Eight">8</button>
+            <button class="button number" aria-label="Nine">9</button>
+            <button class="button operator" aria-label="Multiply">*</button>
+            <button class="button number" aria-label="Four">4</button>
+            <button class="button number" aria-label="Five">5</button>
+            <button class="button number" aria-label="Six">6</button>
+            <button class="button operator" aria-label="Subtract">-</button>
+            <button class="button number" aria-label="One">1</button>
+            <button class="button number" aria-label="Two">2</button>
+            <button class="button number" aria-label="Three">3</button>
+            <button class="button operator" aria-label="Add">+</button>
+            <button class="button number" aria-label="Zero">0</button>
+            <button class="button number" aria-label="Decimal">.</button>
+            <button class="button backspace" aria-label="Backspace">&#x232B;</button>
+            <button class="button equal" aria-label="Equals">=</button>
+        </section>
+    </div>
+    <!-- Link to JavaScript file -->
+    <script src="script.js"></script>
+</body>
+</html>
